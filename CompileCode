@@ -1,0 +1,5 @@
+Compile code:   (OLD): g++ Main.cpp Game.cpp Ball.cpp Paddle.cpp Brick.cpp -o "../EXE/Breakout.exe" -I"C:\SFML Projects\SFML-2.6.1\include" -L"C:\SFML Projects\SFML-2.6.1\lib" -lsfml-graphics -lsfml-audio -lsfml-window -lsfml-system
+
+(OLD): g++ Main.cpp Game.cpp Ball.cpp Paddle.cpp Brick.cpp -o "EXE/Breakout.exe" -I"/ucrt64/include" -L"/ucrt64/lib" -lsfml-graphics -lsfml-window -lsfml-system -lsfml-audio -static -static-libgcc -static-libstdc++
+
+g++ Main.cpp Game.cpp Ball.cpp Paddle.cpp Brick.cpp -o ../EXE/Breakout -lsfml-graphics -lsfml-window -lsfml-system -lsfml-audio
