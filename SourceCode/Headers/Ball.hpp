@@ -34,6 +34,8 @@ public:
     void SetPosition(sf::Vector2f p) { position = p; }
     void SetSpeedMultiplier(float s) { SpeedMultiplier = s; }
     void MultiplySpeed(float mult) { SpeedMultiplier *= mult; }
+    void SetVelocityX(float v) {velocity.x = v;}
+    void SetVelocityY(float v) {velocity.y = v;}
 
     // Random Direction (for game start)
     float RandomFloat(float min, float max);

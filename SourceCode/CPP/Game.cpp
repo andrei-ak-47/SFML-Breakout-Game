@@ -1,7 +1,8 @@
 #include "../Headers/Game.hpp"
 
 void Game::run() {
-
+    FileAPI::FileHandler file("../Logs.txt", true);
+    file.appendLine("NEW GAME STARTED");
     // Game loop
     while (window.isOpen()) {
         float deltaTime = clock.restart().asSeconds();
@@ -32,6 +33,7 @@ void Game::run() {
 
             case GAME_STATE::Playing: {
                 // Automatically restart level if all bricks destroyed
+                file.appendLine("BALL VELOCITY: " + std::to_string(ball.GetVelocity().x) + ", " + std::to_string(ball.GetVelocity().y));
                 if (bricksNum <= 0) {
                     //Put all bricks back
                     Bricks_init();
@@ -164,6 +166,7 @@ void Game::Bricks_init() {
 
 void Game::CheckCollisions() {
     const float PENETRATION_OFFSET = 0.1f; // tiny offset to prevent sticking
+    const float MAX_ANGLE = 60.f;
     auto ballBounds = ball.GetBounds();
     auto ballPos = ball.GetPosition();
     auto ballVel = ball.GetVelocity();
@@ -174,8 +177,39 @@ void Game::CheckCollisions() {
         //Only change velocity if moving down
         //Prevents wall-sticking bugs
         if (ballVel.y > 0) {
-            ball.FlipOnY();
-            paddleSound.play();
+
+            /*Step One: Calculate where ball hit*/
+
+            float BallCenterX = ballBounds.getCenter().x;
+            float PaddleCenterX = paddleBounds.getCenter().x;
+            float BallVelocity = BALL_SPEED_INIT * ball.GetSpeedMultiplier();
+
+            float DistancePX = BallCenterX - PaddleCenterX;
+
+            /*Step Two: Convert hit position to scale [-1, 1]*/
+
+            float DistanceScale = (DistancePX * 2) / PADDLE_WIDTH;
+
+            /*Step Three: Calculate X and Y velocities using trigonometry*/
+            float AngleDeg = MAX_ANGLE * DistanceScale;
+            float AngleRad = AngleDeg * M_PI / 180.f;
+
+            float VelocityX;
+            float VelocityY;
+
+            if(AngleRad < 0){
+
+                VelocityX = -(BallVelocity * std::sin(std::abs(AngleRad)));
+            }
+            else{
+                VelocityX = (BallVelocity * std::sin(std::abs(AngleRad)));
+            }   
+
+            VelocityY = -(BallVelocity * std::cos(std::abs(AngleRad)));
+
+
+            ball.SetVelocityX(VelocityX);
+            ball.SetVelocityY(VelocityY);
         }
     }
 
@@ -187,6 +221,7 @@ void Game::CheckCollisions() {
 
             auto brickBounds = brick.GetBounds();
             if (ballBounds.findIntersection(brickBounds)) {
+                std::cout << "BRICK INTERSECTION\n";
                 brick.Break();
                 brickSound.play();
                 score += 100;
@@ -230,6 +265,7 @@ void Game::CheckCollisions() {
         //Only flip velocity if moving towards the wall
         //Prevents wall-sticking bugs
         if (ballVel.x > 0) {
+            std::cout << "WALL RIGHT INTERSECTION\n";
             ball.FlipOnX();
             wallSound.play();
         }
@@ -241,6 +277,7 @@ void Game::CheckCollisions() {
         //Only flip velocity if moving towards the wall
         //Prevents wall-sticking bugs
         if (ballVel.x < 0) {
+            std::cout << "WALL LEFT INTERSECTION\n";
             ball.FlipOnX();
             wallSound.play();
         }
@@ -259,6 +296,7 @@ void Game::CheckCollisions() {
         //Only flip velocity if moving towards the wall
         //Prevents wall-sticking bugs
         if (ballVel.y < 0) {
+            std::cout << "WALL TOP INTERSECTION\n";
             ball.FlipOnY();
             wallSound.play();
         }

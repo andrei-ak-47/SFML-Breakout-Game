@@ -5,8 +5,6 @@ Ball::Ball(sf::Vector2f p, sf::Color c, float r) :
     color(c),
     radius(r){
 
-    ChooseDirection();//For beggining random direction
-
     ballShape.setFillColor(color);
     ballShape.setRadius(radius);
 
@@ -20,6 +18,7 @@ void Ball::Update(float deltaTime){
 
     position.x += deltaTime * velocity.x;
     position.y += deltaTime * velocity.y;
+    ballShape.setPosition(position);
 }
 
 void Ball::FlipOnX(){
@@ -31,7 +30,6 @@ void Ball::FlipOnY(){
 }
 
 void Ball::Draw(sf::RenderWindow& window){
-    ballShape.setPosition(position);
     window.draw(ballShape);
 }
 
@@ -50,11 +48,7 @@ void Ball::ChooseDirection(){
         angleDeg = RandomFloat(20.f, 60.f);  // right side
     }
     float angleRad = angleDeg * M_PI / 180.f;//Convert to Radians for sin/cos functions
-    std::cout << "ANGLE RAD: " << angleRad << '\n';
-    std::cout << "SIN FUNC: " << std::sin(angleRad);
-    std::cout << "COS FUNC: " << std::cos(angleRad);
     
     velocity.x = BALL_SPEED_INIT * std::sin(angleRad) * SpeedMultiplier;//Set initial velocity for that random diretion, while maintaining correct speed
     velocity.y = BALL_SPEED_INIT * std::cos(angleRad) * SpeedMultiplier;//Set initial velocity for that random diretion, while maintaining correct speed
-    std::cout << "VELOCITY X: " << velocity.x << "\nVELOCITY Y: " << velocity.y << '\n';
 }

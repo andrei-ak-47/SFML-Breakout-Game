@@ -33,10 +33,11 @@ void Paddle::Update(float deltaTime){
     position.x += deltaTime * velocity;
 
     position.x = std::clamp(position.x, 0.f, WINDOW_WIDTH - paddleShape.getSize().x);
+
+    paddleShape.setPosition(position);
 }
 
 void Paddle::Draw(sf::RenderWindow& window){
-    paddleShape.setPosition(position);
     window.draw(paddleShape);
 
 }
