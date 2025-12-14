@@ -4,8 +4,8 @@ set -e  # stop on first error
 
 echo "Building Breakout..."
 
-g++ Main.cpp Game.cpp Ball.cpp Paddle.cpp Brick.cpp \
-    -o ../EXE/Breakout \
+g++ ../CPP/Main.cpp ../CPP/Game.cpp ../CPP/Ball.cpp ../CPP/Paddle.cpp ../CPP/Brick.cpp \
+    -o ../../EXE/Breakout \
     -lsfml-graphics -lsfml-window -lsfml-system -lsfml-audio
 
 echo "Build successful!"

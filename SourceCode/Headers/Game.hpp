@@ -38,7 +38,7 @@ class Game{
 
         void Bricks_init();//Restores the bricks on screen if 0 left
         
-        void ResetPositions();//Restarts the whole game, but not lives
+        void ResetPositions();//Resets positions for paddle, ball, and calculates direction and velocity/X and Y Vectors for the ball
 
         void Render();//calls draw for everything
         void CheckCollisions();//checks collisions FOR EVERYTHING

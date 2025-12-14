@@ -1,4 +1,4 @@
-#include "Game.hpp"
+#include "../Headers/Game.hpp"
 
 int main(){
     std::cout << "Starting Breakout Game..." << std::endl;

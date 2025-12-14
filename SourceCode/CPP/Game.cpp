@@ -1,4 +1,4 @@
-#include "Game.hpp"
+#include "../Headers/Game.hpp"
 
 void Game::run() {
 
@@ -18,12 +18,13 @@ void Game::run() {
         switch (GameState) {
             case GAME_STATE::Start: {
                 if (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::Space)) {
+                    //Reposition all pieces as needed and change GameState
                     ResetPositions();
                     GameState = GAME_STATE::Playing;
                 }
 
                 sf::Text StartText(GlobalFont, "Press Space to Start\n", 30);
-                StartText.setOrigin(StartText.getLocalBounds().getCenter());
+                StartText.setOrigin(StartText.getLocalBounds().getCenter());//Set the origin from top-left corner to middle
                 StartText.setPosition({WINDOW_WIDTH / 2.f, WINDOW_HEIGHT / 2.f});
                 window.draw(StartText);
                 break;
@@ -32,10 +33,11 @@ void Game::run() {
             case GAME_STATE::Playing: {
                 // Automatically restart level if all bricks destroyed
                 if (bricksNum <= 0) {
+                    //Put all bricks back
                     Bricks_init();
                     //Set speed before reseting position so that correct measurment in the ResetPositions
-                    ball.MultiplySpeed(1.5);
-                    ResetPositions();
+                    ball.MultiplySpeed(1.1);
+                    ResetPositions();//Reset all positions and manage velocity change
                 }
 
                 // Paddle input
@@ -43,7 +45,7 @@ void Game::run() {
                     paddle.MoveRight();
                 else if (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::A) || sf::Keyboard::isKeyPressed(sf::Keyboard::Key::Left))
                     paddle.MoveLeft();
-                else
+                else//If nothing pressed, set velocity of paddle to 0
                     paddle.SetVelocityX(0);
 
                 paddle.Update(deltaTime);
@@ -58,9 +60,9 @@ void Game::run() {
             case GAME_STATE::Gameover: {
                 if (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::Space)) {
                     //Set speed before reseting position so that correct measurment in the ResetPositions
-                    ball.SetSpeedMultiplier(1);
-                    ResetPositions();
-                    Bricks_init();
+                    ball.SetSpeedMultiplier(1);//Set speed back to normal
+                    ResetPositions();//Reset all positions and manage velocity
+                    Bricks_init();//reset all bricks
 
                     lives = 3;
                     score = 0;
@@ -68,7 +70,7 @@ void Game::run() {
                 }
 
                 sf::Text GameOver(GlobalFont, "Game Over\nFinal Score: " + std::to_string(score), 30);
-                GameOver.setOrigin(GameOver.getLocalBounds().getCenter());
+                GameOver.setOrigin(GameOver.getLocalBounds().getCenter());//Sets origin from top-left to middle
                 GameOver.setPosition({WINDOW_WIDTH / 2.f, WINDOW_HEIGHT / 2.f});
                 window.draw(GameOver);
                 break;
@@ -93,26 +95,24 @@ Game::Game() :
     lives(3),
     score(0){
 
-    /*
-        Inits all items and sets frame Limit
-    */
+    //Open all Files
     Bricks_init();
-    if (!GlobalFont.openFromFile("../Assets/Font/ARLRDBD.TTF"))
+    if (!GlobalFont.openFromFile("../../Assets/Font/ARLRDBD.TTF"))
         std::cout << "[ERROR]: Failed to load font\n";
 
-    if (!brickBuffer.loadFromFile("../Assets/SFX/BrickHit.mp3"))
+    if (!brickBuffer.loadFromFile("../../Assets/SFX/BrickHit.mp3"))
         std::cout << "[ERROR]: Failed to load brickBuffer SFX\n";
     brickSound.setBuffer(brickBuffer);
 
-    if (!paddleBuffer.loadFromFile("../Assets/SFX/PaddleHit.mp3"))
+    if (!paddleBuffer.loadFromFile("../../Assets/SFX/PaddleHit.mp3"))
         std::cout << "[ERROR]: Failed to load paddleBuffer SFX\n";
     paddleSound.setBuffer(paddleBuffer);
 
-    if (!wallBuffer.loadFromFile("../Assets/SFX/WallHit.wav"))
+    if (!wallBuffer.loadFromFile("../../Assets/SFX/WallHit.wav"))
         std::cout << "[ERROR]: Failed to load wallBuffer SFX\n";
     wallSound.setBuffer(wallBuffer);
 
-    if (!diedBuffer.loadFromFile("../Assets/SFX/Died.wav"))
+    if (!diedBuffer.loadFromFile("../../Assets/SFX/Died.wav"))
         std::cout << "[ERROR]: Failed to load diedBuffer SFX\n";
     diedSound.setBuffer(diedBuffer);
 
@@ -122,10 +122,10 @@ Game::Game() :
 
 void Game::ResetPositions() {
 
-    paddle.SetPosition({300, 700});
+    paddle.SetPosition({300, 700});//Set paddle position back to start
 
-    ball.SetPosition({350, 400});
-    ball.ChooseDirection();
+    ball.SetPosition({350, 400});//Set ball positions back to start
+    ball.ChooseDirection();//Chose the random direction to start and calculate X and Y vector movements based of random angle and velocity
 }
 
 void Game::Bricks_init() {
@@ -143,9 +143,9 @@ void Game::Bricks_init() {
     */
     std::vector<sf::Color> colors = {sf::Color::Blue, sf::Color::Red, sf::Color::Yellow, sf::Color::Green};
 
-    float padding = 5.f;
-    float offsetX = 25.f;
-    float offsetY = 50.f;
+    float padding = 5.f;//small distance between blocks
+    float offsetX = 25.f;//small whole movement to the right from the left side for "padding"
+    float offsetY = 50.f;//same as offset X
 
     bricks.clear();
     bricksNum = 0;
@@ -171,6 +171,8 @@ void Game::CheckCollisions() {
     /* ---------------- Ball & Paddle ---------------- */
     auto paddleBounds = paddle.GetBounds();
     if (ballBounds.findIntersection(paddleBounds)) {
+        //Only change velocity if moving down
+        //Prevents wall-sticking bugs
         if (ballVel.y > 0) {
             ball.FlipOnY();
             paddleSound.play();
@@ -223,7 +225,10 @@ void Game::CheckCollisions() {
     /* ---------------- Ball & Walls ---------------- */
     // Right wall
     if (ballPos.x + ballBounds.size.x > WINDOW_WIDTH) {
+        //Move back to fit inside border
         ball.Move({WINDOW_WIDTH - (ballPos.x + ballBounds.size.x), 0.f});
+        //Only flip velocity if moving towards the wall
+        //Prevents wall-sticking bugs
         if (ballVel.x > 0) {
             ball.FlipOnX();
             wallSound.play();
@@ -233,6 +238,8 @@ void Game::CheckCollisions() {
     // Left wall
     if (ballPos.x < 0) {
         ball.Move({-ballPos.x, 0.f});
+        //Only flip velocity if moving towards the wall
+        //Prevents wall-sticking bugs
         if (ballVel.x < 0) {
             ball.FlipOnX();
             wallSound.play();
@@ -240,7 +247,7 @@ void Game::CheckCollisions() {
     }
 
     // Bottom wall
-    if (ballPos.y + ballBounds.size.y > WINDOW_HEIGHT) {
+    if (ballPos.y + ballBounds.size.y > WINDOW_HEIGHT) {//Fell through, you died
         diedSound.play();
         lives--;
         GameState = (lives > 0) ? GAME_STATE::Start : GAME_STATE::Gameover;
@@ -249,6 +256,8 @@ void Game::CheckCollisions() {
     // Top wall
     if (ballPos.y < 0) {
         ball.Move({0.f, -ballPos.y});
+        //Only flip velocity if moving towards the wall
+        //Prevents wall-sticking bugs
         if (ballVel.y < 0) {
             ball.FlipOnY();
             wallSound.play();
@@ -267,7 +276,7 @@ void Game::Render() {
             if (!brick.IsBroken())
                 brick.Draw(window);
 
-    /* Score & Lives */
+    /* Score & Lives & Speed */
     scoreText.setString("SCORE: " + std::to_string(score));
     scoreText.setPosition({WINDOW_WIDTH / 2.f - scoreText.getGlobalBounds().size.x / 2.f, 10});
     scoreText.setFillColor(sf::Color::White);

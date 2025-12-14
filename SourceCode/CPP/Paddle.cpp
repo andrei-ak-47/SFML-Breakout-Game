@@ -1,4 +1,4 @@
-#include "Paddle.hpp"
+#include "../Headers/Paddle.hpp"
 
 Paddle::Paddle(sf::Vector2f p, sf::Color c, sf::Vector2f s){
     position = p;

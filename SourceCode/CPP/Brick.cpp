@@ -1,4 +1,4 @@
-#include "Brick.hpp"
+#include "../Headers/Brick.hpp"
 
 Brick::Brick(sf::Vector2f p, sf::Color c, sf::Vector2f s){
     position = p;

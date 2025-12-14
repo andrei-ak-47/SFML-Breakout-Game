@@ -2,7 +2,7 @@
 
 set -e
 
-EXE="../EXE/Breakout"
+EXE="../../EXE/Breakout"
 
 if [[ ! -f "$EXE" ]]; then
     echo "Executable not found. Building first..."
