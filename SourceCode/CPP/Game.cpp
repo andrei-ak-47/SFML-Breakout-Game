@@ -39,7 +39,7 @@ void Game::run() {
                     Bricks_init();
                     //Set speed before reseting position so that correct measurment in the ResetPositions
                     ball.MultiplySpeed(1.1);
-                    ResetPositions();//Reset all positions and manage velocity change
+                    GameState = GAME_STATE::Start;
                 }
 
                 // Paddle input
@@ -85,8 +85,8 @@ void Game::run() {
 
 Game::Game() :
     window(sf::VideoMode({1000, 800}), "Breakout", sf::Style::Default),
-    ball({350, 400}, sf::Color::White, BALL_RADIUS),
-    paddle({300, 700}, sf::Color::White, {PADDLE_WIDTH, PADDLE_HEIGTH}),
+    ball("../../Assets/Sprites/Ball.png", {350, 400}),
+    paddle("../../Assets/Sprites/Paddle.png", {300, 700}),
     scoreText(GlobalFont, "", 30),
     LivesText(GlobalFont, "", 30),
     SpeedText(GlobalFont, "", 30),
@@ -143,25 +143,29 @@ void Game::Bricks_init() {
             Yellow
             Green
     */
-    std::vector<sf::Color> colors = {sf::Color::Blue, sf::Color::Red, sf::Color::Yellow, sf::Color::Green};
-
-    float padding = 5.f;//small distance between blocks
-    float offsetX = 25.f;//small whole movement to the right from the left side for "padding"
-    float offsetY = 50.f;//same as offset X
+    //std::string ColorFileNames = {sf::Color::Blue, sf::Color::Red, sf::Color::Yellow, sf::Color::Green};
+    std::string ColorFileNames[4] = {"../../Assets/Sprites/BlueBrick.png", "../../Assets/Sprites/RedBrick.png", "../../Assets/Sprites/YellowBrick.png", "../../Assets/Sprites/GreenBrick.png"};
 
     bricks.clear();
     bricksNum = 0;
 
+    float padding = 5.f;
+    float offsetX = 25.f;
+    float offsetY = 50.f;
+
     for (int i = 0; i < BRICK_ROW_NUM; i++) {
-        std::vector<Brick> row;
+        std::vector<std::unique_ptr<Brick>> row;
         for (int j = 0; j < BRICK_COL_NUM; j++) {
             float x = j * (BRICK_WIDTH + padding) + offsetX;
             float y = i * (BRICK_HEIGTH + padding) + offsetY;
-            row.push_back(Brick({x, y}, colors[i % colors.size()], {BRICK_WIDTH, BRICK_HEIGTH}));
+
+            std::string fileName = ColorFileNames[i % 4];
+            row.push_back(std::make_unique<Brick>(fileName, sf::Vector2f{x, y}));
             bricksNum++;
         }
-        bricks.push_back(row);
+        bricks.push_back(std::move(row)); // move the row into the grid
     }
+
 }
 
 void Game::CheckCollisions() {
@@ -217,12 +221,12 @@ void Game::CheckCollisions() {
     bool brickHit = false;
     for (auto& row : bricks) {
         for (auto& brick : row) {
-            if (brick.IsBroken()) continue;
+            if (brick->IsBroken()) continue;
 
-            auto brickBounds = brick.GetBounds();
+            auto brickBounds = brick->GetBounds();
             if (ballBounds.findIntersection(brickBounds)) {
                 std::cout << "BRICK INTERSECTION\n";
-                brick.Break();
+                brick->Break();
                 brickSound.play();
                 score += 100;
                 bricksNum--;
@@ -311,8 +315,8 @@ void Game::Render() {
 
     for (auto& row : bricks)
         for (auto& brick : row)
-            if (!brick.IsBroken())
-                brick.Draw(window);
+            if (!brick->IsBroken())
+                brick->Draw(window);
 
     /* Score & Lives & Speed */
     scoreText.setString("SCORE: " + std::to_string(score));

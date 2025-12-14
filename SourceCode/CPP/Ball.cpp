@@ -1,13 +1,14 @@
 #include "../Headers/Ball.hpp"
 
-Ball::Ball(sf::Vector2f p, sf::Color c, float r) :
-    position(p),
-    color(c),
-    radius(r){
+Ball::Ball(const std::string& fileName, sf::Vector2f p)
+    : texture(),                  // default construct texture
+      position(p){
 
-    ballShape.setFillColor(color);
-    ballShape.setRadius(radius);
-
+    if (!texture.loadFromFile(fileName)) {
+        std::cout << "[ERROR]: Failed to load Ball texture\n";
+    }
+    ballShape = std::make_unique<sf::Sprite>(sf::Sprite(texture));
+    ballShape->setPosition(position);
 }
 
 void Ball::Update(float deltaTime){
@@ -18,7 +19,7 @@ void Ball::Update(float deltaTime){
 
     position.x += deltaTime * velocity.x;
     position.y += deltaTime * velocity.y;
-    ballShape.setPosition(position);
+    ballShape->setPosition(position);
 }
 
 void Ball::FlipOnX(){
@@ -30,7 +31,7 @@ void Ball::FlipOnY(){
 }
 
 void Ball::Draw(sf::RenderWindow& window){
-    window.draw(ballShape);
+    window.draw(*ballShape);
 }
 
 float Ball::RandomFloat(float min, float max){

@@ -1,13 +1,14 @@
 #include "../Headers/Paddle.hpp"
 
-Paddle::Paddle(sf::Vector2f p, sf::Color c, sf::Vector2f s){
-    position = p;
-    color = c;
-    size = s;
+Paddle::Paddle(const std::string& fileName, sf::Vector2f p)
+    : texture(),                  // default construct texture
+      position(p){
 
-    //set the color and size once in constructer, assuming the color and size is static(doesnt change)
-    paddleShape.setFillColor(color);
-    paddleShape.setSize(size);
+    if (!texture.loadFromFile(fileName)) {
+        std::cout << "[ERROR]: Failed to load Ball texture\n";
+    }
+    paddleShape = std::make_unique<sf::Sprite>(sf::Sprite(texture));
+    paddleShape->setPosition(position);
 }
 
 void Paddle::MoveRight(){
@@ -32,12 +33,12 @@ void Paddle::Update(float deltaTime){
 
     position.x += deltaTime * velocity;
 
-    position.x = std::clamp(position.x, 0.f, WINDOW_WIDTH - paddleShape.getSize().x);
+    position.x = std::clamp(position.x, 0.f, static_cast<float>(WINDOW_WIDTH - PADDLE_WIDTH));
 
-    paddleShape.setPosition(position);
+    paddleShape->setPosition(position);
 }
 
 void Paddle::Draw(sf::RenderWindow& window){
-    window.draw(paddleShape);
+    window.draw(*paddleShape);
 
 }

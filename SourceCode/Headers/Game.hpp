@@ -28,7 +28,7 @@ class Game{
         
         Ball ball;
         Paddle paddle;
-        std::vector<std::vector<Brick>> bricks;
+        std::vector<std::vector<std::unique_ptr<Brick>>> bricks;
 
         int score;
         int lives; 

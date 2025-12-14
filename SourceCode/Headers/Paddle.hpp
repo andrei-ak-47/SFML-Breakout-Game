@@ -3,16 +3,20 @@
 
 class Paddle{
     private:
-        sf::RectangleShape paddleShape;
-        sf::Color color;
-        sf::Vector2f size;
+        //sf::RectangleShape paddleShape;
+        //sf::Color color;
+        //sf::Vector2f size;
+
+        sf::Texture texture;
+        std::unique_ptr<sf::Sprite> paddleShape;
+
         
         float velocity = 0;//Not sf::vector2f because only moves in one dimension (X axis)
 
         sf::Vector2f position;//X and Y positions of the paddleShape
     public:
         Paddle() = default;//Default Constructer
-        Paddle(sf::Vector2f p, sf::Color c, sf::Vector2f s);
+        Paddle(const std::string& fileName, sf::Vector2f p);
         ~Paddle() = default;
 
         void MoveRight();//changes velocity to positive
@@ -24,5 +28,5 @@ class Paddle{
 
         /*HELPERS*/
         void SetVelocityX(float v){velocity = v;}
-        sf::FloatRect GetBounds() const {return paddleShape.getGlobalBounds();}
+        sf::FloatRect GetBounds() const {return paddleShape->getGlobalBounds();}
 };

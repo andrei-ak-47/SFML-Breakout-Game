@@ -4,9 +4,12 @@
 class Ball {
 private:
     // Shape & Appearance
-    sf::CircleShape ballShape;
-    sf::Color color;
-    float radius;
+    //sf::CircleShape ballShape;
+    //sf::Color color;
+    //float radius;
+
+    sf::Texture texture;
+    std::unique_ptr<sf::Sprite> ballShape;
 
     // Physics
     sf::Vector2f position;   // Current position of the ball
@@ -16,7 +19,7 @@ private:
 public:
     // Constructors / Destructor
     Ball() = default;
-    Ball(sf::Vector2f p, sf::Color c, float r);
+    Ball(const std::string& fileName, sf::Vector2f p);
     ~Ball() = default;
 
     // Update & Movement
@@ -25,7 +28,7 @@ public:
     void Draw(sf::RenderWindow& window);   // Render the ball
 
     // Getters
-    sf::FloatRect GetBounds() const { return ballShape.getGlobalBounds(); }
+    sf::FloatRect GetBounds() const { return ballShape->getGlobalBounds(); }
     sf::Vector2f GetVelocity() const { return velocity; }
     sf::Vector2f GetPosition() const { return position; }
     float GetSpeedMultiplier() const { return SpeedMultiplier; }

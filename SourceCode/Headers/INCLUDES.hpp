@@ -8,6 +8,7 @@
 #include <iostream>
 #include <cmath>
 #include <random>
+#include <memory>
 
 #include "../../FileAPI/FileHandler.hpp"
 
