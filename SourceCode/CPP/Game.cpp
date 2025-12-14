@@ -1,8 +1,8 @@
 #include "../Headers/Game.hpp"
 
 void Game::run() {
-    FileAPI::FileHandler file("../Logs.txt", true);
-    file.appendLine("NEW GAME STARTED");
+    //FileAPI::FileHandler file("../Logs.txt", true);
+    //file.appendLine("NEW GAME STARTED");
     // Game loop
     while (window.isOpen()) {
         float deltaTime = clock.restart().asSeconds();
@@ -33,7 +33,7 @@ void Game::run() {
 
             case GAME_STATE::Playing: {
                 // Automatically restart level if all bricks destroyed
-                file.appendLine("BALL VELOCITY: " + std::to_string(ball.GetVelocity().x) + ", " + std::to_string(ball.GetVelocity().y));
+                //file.appendLine("BALL VELOCITY: " + std::to_string(ball.GetVelocity().x) + ", " + std::to_string(ball.GetVelocity().y));
                 if (bricksNum <= 0) {
                     //Put all bricks back
                     Bricks_init();
