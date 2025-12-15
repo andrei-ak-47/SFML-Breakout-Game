@@ -32,6 +32,8 @@ void Game::run() {
             }
 
             case GAME_STATE::Playing: {
+                std::cout << "Ball Vel: X: ";
+                std::cout << ball.GetVelocity().x << ", Y: " << ball.GetVelocity().y << '\n';
                 if (bricksNum <= 0) {
                     GameState = GAME_STATE::LevelCleared;
                 }
@@ -46,8 +48,13 @@ void Game::run() {
 
                 paddle.Update(deltaTime);
 
-                ball.Update(deltaTime);
-                CheckCollisions();
+                int SubStepCount = 5;
+                for(int i = 0; i < SubStepCount; i++){
+                    ball.Update(deltaTime / SubStepCount);
+                    CheckCollisions();
+
+                    if(GameState != GAME_STATE::Playing) break;
+                }
 
                 Render();
                 break;
@@ -59,7 +66,7 @@ void Game::run() {
                 }
                 LoadLevel(CurrentLvl);
 
-                ball.MultiplySpeed(BALL_SPEED_MULT);
+                ball.IncreaseSpeed();
 
                 ResetPositions();
                 GameState = GAME_STATE::Start;
@@ -68,7 +75,7 @@ void Game::run() {
             case GAME_STATE::Gameover: {
                 if (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::Space)) {
                     //Set speed before reseting position so that correct measurment in the ResetPositions
-                    ball.SetSpeedMultiplier(1);//Set speed back to normal
+                    ball.ResetSpeed();//Set speed back to normal
                     ResetPositions();//Reset all positions and manage velocity
 
                     CurrentLvl = 0;
@@ -150,10 +157,19 @@ void Game::LoadFiles(){
 
 void Game::ResetPositions() {
 
-    paddle.SetPosition({300, 700});//Set paddle position back to start
+    //paddle.SetPosition({300, 700});//Set paddle position back to start
+    float paddleX = WINDOW_WIDTH / 2.f - PADDLE_WIDTH / 2.f;
+    float paddleY = WINDOW_HEIGHT - 100.f; // tweak this value
 
-    ball.SetPosition({350, 400});//Set ball positions back to start
-    ball.ChooseDirection();//Chose the random direction to start and calculate X and Y vector movements based of random angle and velocity
+    paddle.SetPosition({paddleX, paddleY});
+
+    float ballX = WINDOW_WIDTH / 2.f - BALL_RADIUS;
+    float ballY = paddleY - BALL_RADIUS * 2.f - 5.f;
+
+    ball.SetPosition({ballX, ballY});
+    
+    ball.SetVelocityX(0);
+    ball.SetVelocityY(ball.GetSpeed());//Set the ball going fully down
 }
 
 void Game::LoadLevel(int LevelID){
@@ -193,6 +209,7 @@ void Game::LoadLevel(int LevelID){
         //bricks.emplace_back(std::move(row));
     }
 }
+
 void Game::CheckCollisions() {
     const float PENETRATION_OFFSET = 0.1f; // tiny offset to prevent sticking
     const float MAX_ANGLE = 60.f;
@@ -206,12 +223,13 @@ void Game::CheckCollisions() {
         //Only change velocity if moving down
         //Prevents wall-sticking bugs
         if (ballVel.y > 0) {
+            paddleSound.play();
 
             /*Step One: Calculate where ball hit*/
 
             float BallCenterX = ballBounds.getCenter().x;
             float PaddleCenterX = paddleBounds.getCenter().x;
-            float BallVelocity = BALL_SPEED_INIT * ball.GetSpeedMultiplier();
+            float BallVelocity = ball.GetSpeed();
 
             float DistancePX = BallCenterX - PaddleCenterX;
 
@@ -293,7 +311,6 @@ void Game::CheckCollisions() {
         //Only flip velocity if moving towards the wall
         //Prevents wall-sticking bugs
         if (ballVel.x > 0) {
-            std::cout << "WALL RIGHT INTERSECTION\n";
             ball.FlipOnX();
             wallSound.play();
         }
@@ -305,7 +322,6 @@ void Game::CheckCollisions() {
         //Only flip velocity if moving towards the wall
         //Prevents wall-sticking bugs
         if (ballVel.x < 0) {
-            std::cout << "WALL LEFT INTERSECTION\n";
             ball.FlipOnX();
             wallSound.play();
         }
@@ -324,7 +340,6 @@ void Game::CheckCollisions() {
         //Only flip velocity if moving towards the wall
         //Prevents wall-sticking bugs
         if (ballVel.y < 0) {
-            std::cout << "WALL TOP INTERSECTION\n";
             ball.FlipOnY();
             wallSound.play();
         }
@@ -352,7 +367,7 @@ void Game::Render() {
     LivesText.setFillColor(sf::Color::White);
     window.draw(LivesText);
 
-    SpeedText.setString("Speed: " + std::to_string(ball.GetSpeedMultiplier()) + 'x');
+    SpeedText.setString("Speed: " + std::to_string(ball.GetSpeed()) + "px/s");
     SpeedText.setPosition({WINDOW_WIDTH - SpeedText.getLocalBounds().size.x - 10, 0});
     SpeedText.setFillColor(sf::Color::White);
     window.draw(SpeedText);
