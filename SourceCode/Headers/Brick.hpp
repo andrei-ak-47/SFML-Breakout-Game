@@ -2,9 +2,6 @@
 #include "INCLUDES.hpp"
 class Brick{
     private:
-        //sf::RectangleShape brickShape;
-        //sf::Color color;
-       //sf::Vector2f size;
 
        sf::Texture texture;
        std::unique_ptr<sf::Sprite> brickShape;
@@ -12,22 +9,19 @@ class Brick{
         
         sf::Vector2f position;//Holds X and Y position of brickShape
 
-        //First value is the velocity on X axis
-        //Second value is the velocity on Y axis
-        sf::Vector2f velocity;
-
-        bool broken = false;//Shows if the block is broken.
+        //bool broken = false;//Shows if the block is broken.
+        BRICK_TYPE BrickType;
     public:
         Brick() = default;//Default Constructer
-        Brick(const std::string& fileName, sf::Vector2f p);
+        Brick(sf::Texture& t, sf::Vector2f p, BRICK_TYPE type);
         ~Brick() = default;
 
-        void Break() { broken = true;}//break, not part of main game vector anymore
+        //void Break() { BrickType = BRICK_TYPE::BROKEN;}//break, not part of main game vector anymore
 
         void Draw(sf::RenderWindow& window);//draw function, render the shape
 
         /*HELPERS*/
-        bool IsBroken() const {return broken;}
+        //bool IsBroken() const {return BrickType == BRICK_TYPE::BROKEN;}
         sf::FloatRect GetBounds() const {return brickShape->getGlobalBounds();}
         sf::Vector2f GetPosition() const {return position;}
 };

@@ -20,9 +20,10 @@
 #define PADDLE_HEIGTH 30
 
 
-#define BALL_SPEED_INIT 282.84// √(200^2 + 200^2); aka, pythagoream theorem
+#define BALL_SPEED_INIT 300
 #define MAX_BALL_SPEED 300
 #define BALL_RADIUS 8
+#define BALL_SPEED_MULT 1.2
 
 #define BRICK_ROW_NUM 6
 #define BRICK_COL_NUM 10
@@ -33,5 +34,10 @@
 enum class GAME_STATE{
     Start,
     Playing,
+    LevelCleared,
     Gameover
+};
+
+enum BRICK_TYPE{
+    NORMAL
 };

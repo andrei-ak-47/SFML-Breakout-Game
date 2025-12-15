@@ -32,14 +32,8 @@ void Game::run() {
             }
 
             case GAME_STATE::Playing: {
-                // Automatically restart level if all bricks destroyed
-                //file.appendLine("BALL VELOCITY: " + std::to_string(ball.GetVelocity().x) + ", " + std::to_string(ball.GetVelocity().y));
                 if (bricksNum <= 0) {
-                    //Put all bricks back
-                    Bricks_init();
-                    //Set speed before reseting position so that correct measurment in the ResetPositions
-                    ball.MultiplySpeed(1.1);
-                    GameState = GAME_STATE::Start;
+                    GameState = GAME_STATE::LevelCleared;
                 }
 
                 // Paddle input
@@ -58,13 +52,27 @@ void Game::run() {
                 Render();
                 break;
             }
+            case GAME_STATE::LevelCleared:{
+                //When level is cleared
+                if (++CurrentLvl >= LevelPaths.size()) {
+                    CurrentLvl = 0; // or go to GameOver/Win screen
+                }
+                LoadLevel(CurrentLvl);
 
+                ball.MultiplySpeed(BALL_SPEED_MULT);
+
+                ResetPositions();
+                GameState = GAME_STATE::Start;
+                break;
+            }
             case GAME_STATE::Gameover: {
                 if (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::Space)) {
                     //Set speed before reseting position so that correct measurment in the ResetPositions
                     ball.SetSpeedMultiplier(1);//Set speed back to normal
                     ResetPositions();//Reset all positions and manage velocity
-                    Bricks_init();//reset all bricks
+
+                    CurrentLvl = 0;
+                    LoadLevel(CurrentLvl);//reset all bricks
 
                     lives = 3;
                     score = 0;
@@ -95,10 +103,20 @@ Game::Game() :
     brickSound(brickBuffer),
     diedSound(diedBuffer),
     lives(3),
-    score(0){
+    score(0),
+    CurrentLvl(0){
 
+    LoadFiles();
+
+
+    LoadLevel(CurrentLvl);
+
+    window.setFramerateLimit(144);
+    window.setVerticalSyncEnabled(true);
+}
+
+void Game::LoadFiles(){
     //Open all Files
-    Bricks_init();
     if (!GlobalFont.openFromFile("../../Assets/Font/ARLRDBD.TTF"))
         std::cout << "[ERROR]: Failed to load font\n";
 
@@ -118,8 +136,16 @@ Game::Game() :
         std::cout << "[ERROR]: Failed to load diedBuffer SFX\n";
     diedSound.setBuffer(diedBuffer);
 
-    window.setFramerateLimit(144);
-    window.setVerticalSyncEnabled(true);
+    brickTextures[0] = {sf::Texture("../../Assets/Sprites/BlueBrick.png")};
+    brickTextures[1] = {sf::Texture("../../Assets/Sprites/RedBrick.png")};
+    brickTextures[2] = {sf::Texture("../../Assets/Sprites/YellowBrick.png")};
+    brickTextures[3] = {sf::Texture("../../Assets/Sprites/GreenBrick.png")};
+
+    LevelPaths.push_back("../../Assets/Levels/Level1.txt");
+    LevelPaths.push_back("../../Assets/Levels/Level2.txt");
+    LevelPaths.push_back("../../Assets/Levels/Level3.txt");
+    LevelPaths.push_back("../../Assets/Levels/Level4.txt");
+    LevelPaths.push_back("../../Assets/Levels/Level5.txt");
 }
 
 void Game::ResetPositions() {
@@ -130,21 +156,7 @@ void Game::ResetPositions() {
     ball.ChooseDirection();//Chose the random direction to start and calculate X and Y vector movements based of random angle and velocity
 }
 
-void Game::Bricks_init() {
-    /*
-        Makes the brick vector
-        Num Of Rows: BRICK_ROW_NUM
-        Num of Cols: BRICK_COL_NUM
-        Colors are determined by row
-
-        Colors:
-            Blue
-            Red
-            Yellow
-            Green
-    */
-    //std::string ColorFileNames = {sf::Color::Blue, sf::Color::Red, sf::Color::Yellow, sf::Color::Green};
-    std::string ColorFileNames[4] = {"../../Assets/Sprites/BlueBrick.png", "../../Assets/Sprites/RedBrick.png", "../../Assets/Sprites/YellowBrick.png", "../../Assets/Sprites/GreenBrick.png"};
+void Game::LoadLevel(int LevelID){
 
     bricks.clear();
     bricksNum = 0;
@@ -153,21 +165,34 @@ void Game::Bricks_init() {
     float offsetX = 25.f;
     float offsetY = 50.f;
 
-    for (int i = 0; i < BRICK_ROW_NUM; i++) {
-        std::vector<std::unique_ptr<Brick>> row;
-        for (int j = 0; j < BRICK_COL_NUM; j++) {
+    std::string FilePath = LevelPaths[LevelID];
+
+    FileAPI::FileHandler file(FilePath, true);
+
+    for(int i = 0; i < BRICK_ROW_NUM; i++){
+        std::string FileRow = file.readLine(true);
+        //std::vector<std::unique_ptr<Brick>> row;
+
+        if (FileRow.empty()) break;
+
+        for(int j = 0; j < BRICK_COL_NUM && j < FileRow.size(); j++){
+
             float x = j * (BRICK_WIDTH + padding) + offsetX;
             float y = i * (BRICK_HEIGTH + padding) + offsetY;
 
-            std::string fileName = ColorFileNames[i % 4];
-            row.push_back(std::make_unique<Brick>(fileName, sf::Vector2f{x, y}));
-            bricksNum++;
+            switch(FileRow[j]){
+                case '1':{
+                    //std::string fileName = ColorFileNames[i % 4];
+                    bricks.emplace_back(std::make_unique<Brick>(brickTextures[i % brickTextures.size()], sf::Vector2f{x, y}, BRICK_TYPE::NORMAL));
+                    bricksNum++;
+                    break;
+                }
+            }
+
         }
-        bricks.push_back(std::move(row)); // move the row into the grid
+        //bricks.emplace_back(std::move(row));
     }
-
 }
-
 void Game::CheckCollisions() {
     const float PENETRATION_OFFSET = 0.1f; // tiny offset to prevent sticking
     const float MAX_ANGLE = 60.f;
@@ -219,47 +244,46 @@ void Game::CheckCollisions() {
 
     /* ---------------- Ball & Bricks ---------------- */
     bool brickHit = false;
-    for (auto& row : bricks) {
-        for (auto& brick : row) {
-            if (brick->IsBroken()) continue;
+    for (auto it = bricks.begin(); it != bricks.end(); ++it) {
+        auto& brick = *it;
+        auto brickBounds = brick->GetBounds();
+        
+        if (ballBounds.findIntersection(brickBounds)) {
+            std::cout << "BRICK INTERSECTION\n";
 
-            auto brickBounds = brick->GetBounds();
-            if (ballBounds.findIntersection(brickBounds)) {
-                std::cout << "BRICK INTERSECTION\n";
-                brick->Break();
-                brickSound.play();
-                score += 100;
-                bricksNum--;
-                brickHit = true;
+            brickSound.play();
+            score += 100;
+            bricksNum--;
+            brickHit = true;
 
-                // Calculate overlap
-                float overlapLeft   = (ballBounds.position.x + ballBounds.size.x) - brickBounds.position.x;
-                float overlapRight  = (brickBounds.position.x + brickBounds.size.x) - ballBounds.position.x;
-                float overlapTop    = (ballBounds.position.y + ballBounds.size.y) - brickBounds.position.y;
-                float overlapBottom = (brickBounds.position.y + brickBounds.size.y) - ballBounds.position.y;
+            // Calculate overlap
+            float overlapLeft   = (ballBounds.position.x + ballBounds.size.x) - brickBounds.position.x;
+            float overlapRight  = (brickBounds.position.x + brickBounds.size.x) - ballBounds.position.x;
+            float overlapTop    = (ballBounds.position.y + ballBounds.size.y) - brickBounds.position.y;
+            float overlapBottom = (brickBounds.position.y + brickBounds.size.y) - ballBounds.position.y;
 
-                float minOverlap = std::min({overlapLeft, overlapRight, overlapTop, overlapBottom});
+            float minOverlap = std::min({overlapLeft, overlapRight, overlapTop, overlapBottom});
 
-                if (minOverlap == overlapTop)
-                    ball.Move({0.f, -overlapTop - PENETRATION_OFFSET});
-                else if (minOverlap == overlapBottom)
-                    ball.Move({0.f, overlapBottom + PENETRATION_OFFSET});
-                else if (minOverlap == overlapLeft)
-                    ball.Move({-overlapLeft - PENETRATION_OFFSET, 0.f});
-                else
-                    ball.Move({overlapRight + PENETRATION_OFFSET, 0.f});
+            if (minOverlap == overlapTop)
+                ball.Move({0.f, -overlapTop - PENETRATION_OFFSET});
+            else if (minOverlap == overlapBottom)
+                ball.Move({0.f, overlapBottom + PENETRATION_OFFSET});
+            else if (minOverlap == overlapLeft)
+                ball.Move({-overlapLeft - PENETRATION_OFFSET, 0.f});
+            else
+                ball.Move({overlapRight + PENETRATION_OFFSET, 0.f});
 
-                // Flip appropriate velocity
-                if (minOverlap == overlapLeft || minOverlap == overlapRight)
-                    ball.FlipOnX();
-                else
-                    ball.FlipOnY();
+            // Flip appropriate velocity
+            if (minOverlap == overlapLeft || minOverlap == overlapRight)
+                ball.FlipOnX();
+            else
+                ball.FlipOnY();
 
-                break; // stop checking bricks for this frame
-            }
+            it = bricks.erase(it); // erase returns the next valid iterator
+            break; // stop checking bricks for this frame
         }
-        if (brickHit) break;
     }
+
 
     /* ---------------- Ball & Walls ---------------- */
     // Right wall
@@ -307,16 +331,15 @@ void Game::CheckCollisions() {
     }
 }
 
-
 void Game::Render() {
     /* Paddle, Ball, Bricks */
     paddle.Draw(window);
     ball.Draw(window);
 
-    for (auto& row : bricks)
-        for (auto& brick : row)
-            if (!brick->IsBroken())
-                brick->Draw(window);
+    for (auto& brick : bricks){
+        brick->Draw(window);
+    }
+           
 
     /* Score & Lives & Speed */
     scoreText.setString("SCORE: " + std::to_string(score));
