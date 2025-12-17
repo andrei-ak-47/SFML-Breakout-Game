@@ -31,17 +31,19 @@ class Game{
         sf::Sound diedSound;
         
         /*Objects*/
-        Ball ball;
-        Paddle paddle;
+        std::unique_ptr<Ball> ball;
+        std::unique_ptr<Paddle> paddle;
         std::vector<std::unique_ptr<Brick>> bricks;
 
         /*Textures*/
-        std::array<sf::Texture, 4> brickTextures;
-
+        sf::Texture BallTexture;
+        sf::Texture PaddleTexture;
+        std::array<sf::Texture, 4> StandardBrickTextures;
+        std::array<sf::Texture, 4> StrongBrickTextures;
+        std::array<sf::Texture, 4> StrongBrickBrokenTextures;
         /*Values*/
         int score;
         int lives; 
-        int bricksNum;
         int CurrentLvl;
 
         /*Levels*/
@@ -49,8 +51,6 @@ class Game{
 
         /*Game State*/
         GAME_STATE GameState = GAME_STATE::Start;
-
-        //void Bricks_init();//Restores the bricks on screen if 0 left
         
         void LoadLevel(int LevelID);//Restores bricks for the next level if 0 left
         void ResetPositions();//Resets positions for paddle, ball, and calculates direction and velocity/X and Y Vectors for the ball

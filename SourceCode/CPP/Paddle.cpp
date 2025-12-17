@@ -1,14 +1,7 @@
 #include "../Headers/Paddle.hpp"
 
-Paddle::Paddle(const std::string& fileName, sf::Vector2f p)
-    : texture(),                  // default construct texture
-      position(p){
-
-    if (!texture.loadFromFile(fileName)) {
-        std::cout << "[ERROR]: Failed to load Ball texture\n";
-    }
-    paddleShape = std::make_unique<sf::Sprite>(sf::Sprite(texture));
-    paddleShape->setPosition(position);
+Paddle::Paddle(sf::Texture& texture)
+    : paddleShape(texture){
 }
 
 void Paddle::MoveRight(){
@@ -31,14 +24,14 @@ void Paddle::Update(float deltaTime){
         fixes boundry problems using std::clamp
     */
 
-    position.x += deltaTime * velocity;
+    float PositionX = paddleShape.getPosition().x;
 
-    position.x = std::clamp(position.x, 0.f, static_cast<float>(WINDOW_WIDTH - PADDLE_WIDTH));
+    PositionX = std::clamp(PositionX, 0.f, static_cast<float>(WINDOW_WIDTH - PADDLE_WIDTH));
 
-    paddleShape->setPosition(position);
+    paddleShape.setPosition({PositionX += deltaTime * velocity, paddleShape.getPosition().y});
 }
 
 void Paddle::Draw(sf::RenderWindow& window){
-    window.draw(*paddleShape);
+    window.draw(paddleShape);
 
 }
